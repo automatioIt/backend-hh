@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 )
 
 const url = "https://api.hh.ru/"
@@ -119,21 +120,26 @@ func main() {
 	response := make(chan []Items)
 
 	pageQuantity := 39
-
+	var wg sync.WaitGroup
 	for i := 0; i < pageQuantity; i++ {
 		//go MakeRequest("vacancies", "?text=junior&per_page=49&page="+strconv.Itoa(i), response)
-		go MakeRequest("vacancies", fmt.Sprintf("?text=junior&per_page=49&page=%v", i), response)
+		//go MakeRequest("vacancies", fmt.Sprintf("?text=junior&per_page=49&page=%v", i), response)
+		wg.Add(1)
+		go func(page int) {
+			MakeRequest("vacancies", fmt.Sprintf("?text=Java%%20junior&per_page=49&page=%v", page), response)
+			wg.Done()
+		}(i)
 	}
-
 	for i := 0; i < pageQuantity; i++ {
 		resulItems = append(resulItems, <-response...)
 	}
 
+	wg.Wait()
 	close(response)
 
-	//for _, item := range resulItems {
-	//	log.Println(item)
-	//}
+	for _, item := range resulItems {
+		log.Println(item)
+	}
 
 	log.Println(len(resulItems))
 }
