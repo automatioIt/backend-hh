@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
 )
 
 const url = "https://api.hh.ru/"
@@ -113,8 +114,16 @@ type Items struct {
 	} `json:"working_time_modes"`
 }
 
-func main() {
+func track(msg string) (string, time.Time) {
+	return msg, time.Now()
+}
 
+func duration(msg string, start time.Time) {
+	log.Printf("%v: %v\n", msg, time.Since(start))
+}
+
+func main() {
+	defer duration(track("main"))
 	var resulItems []Items
 
 	response := make(chan []Items)
@@ -126,7 +135,8 @@ func main() {
 		//go MakeRequest("vacancies", fmt.Sprintf("?text=junior&per_page=49&page=%v", i), response)
 		wg.Add(1)
 		go func(page int) {
-			MakeRequest("vacancies", fmt.Sprintf("?text=Java%%20junior&per_page=49&page=%v", page), response)
+			//MakeRequest("vacancies", fmt.Sprintf("?text=Java%%20junior&per_page=49&page=%v", page), response)
+			MakeRequest("vacancies", fmt.Sprintf("?text=Java&per_page=49&page=%v", page), response)
 			wg.Done()
 		}(i)
 	}
@@ -137,9 +147,13 @@ func main() {
 	wg.Wait()
 	close(response)
 
-	for _, item := range resulItems {
-		log.Println(item)
-	}
+	//for _, item := range resulItems {
+	//	log.Println(item.Name)
+	//	log.Println(item.CreatedAt)
+	//	log.Println(item.ApplyAlternateURL)
+	//	log.Println(item.AlternateURL)
+	//	log.Println(item.URL)
+	//}
 
 	log.Println(len(resulItems))
 }
